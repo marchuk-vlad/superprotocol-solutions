@@ -5,7 +5,10 @@ solution_path=$1
 solution_name=$2
 
 # cd to one directory up of current script
-cd $(dirname $(realpath "$0"))/..
+REAL_PATH=$(realpath "$0")
+LOCAL_PATH=$(dirname "$REAL_PATH")
+cd "$LOCAL_PATH"
+cd ..
 
 npm ci
 npm run build

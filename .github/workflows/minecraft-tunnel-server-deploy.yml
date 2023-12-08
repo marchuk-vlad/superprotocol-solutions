@@ -9,7 +9,7 @@ env:
   BASE_IMAGE_OFFER: ''
   TUNNEL_SERVER_OFFER: ''
   STORAGE_OFFER: ''
-  SOLUTION_NAME: minecraft
+  SOLUTION_NAME: minecraft-tunnel-server
 
 jobs:
   start-tunnel-server:
@@ -20,6 +20,19 @@ jobs:
       repository-projects: read
 
     steps:
+      - name: Check secrets and variables
+        run: |
+          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
+            echo "Error: GH_TOKEN secret is missing. Workflow will fail."
+            exit 1
+          elif [ -z "${{ secrets.MINECRAFT_SOLUTION_SERVER_TOKEN }}" ]; then 
+            echo "Error: MINECRAFT_SOLUTION_SERVER_TOKEN secret is missing. Workflow will fail."
+            exit 1
+          elif [ -z "${{ secrets.SPCTL_CONFIG_BASE64 }}" ]; then 
+            echo "Error: SPCTL_CONFIG_BASE64 secret is missing. Workflow will fail."
+            exit 1
+          fi
+
       - name: Get previous build for solution
         continue-on-error: true
         env:
@@ -51,7 +64,7 @@ jobs:
           echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
 
       - name: Prepare tunnel server data
-        if: env.SOLUTION_NAME == 'minecraft'
+        if: env.SOLUTION_NAME == 'minecraft-tunnel-server'
         run: |
           mkdir solution-data
           echo "${{ secrets.MINECRAFT_SOLUTION_SERVER_TOKEN }}" > solution-data/auth-token

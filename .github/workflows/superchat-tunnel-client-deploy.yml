@@ -26,7 +26,10 @@ jobs:
     steps:
       - name: Check secrets and variables
         run: |
-          if [ -z "${{ secrets.GH_TOKEN }}" ]; then
+          if [ -z "${{ secrets.CHAT_ENV }}" ]; then
+            echo "Error: CHAT_ENV secret is missing. Workflow will fail."
+            exit 1
+          elif [ -z "${{ secrets.GH_TOKEN }}" ]; then
             echo "Error: GH_TOKEN secret is missing. Workflow will fail."
             exit 1
           elif [ -z "${{ secrets.SUPERCHAT_SOLUTION_SERVER_TOKEN }}" ]; then 

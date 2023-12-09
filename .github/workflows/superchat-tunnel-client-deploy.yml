@@ -85,7 +85,7 @@ jobs:
       - name: Prepare tunnel client data
         if: env.SOLUTION_NAME == 'superchat-tunnel-client'
         run: |
-          echo "SOLUTION_BUILD_SCRIPT=Tunnel\ Client/chat/scripts/prepare-solution.sh" >> $GITHUB_ENV
+          echo "SOLUTION_BUILD_SCRIPT=tunnel-client/chat/scripts/prepare-solution.sh" >> $GITHUB_ENV
           echo "SOLUTION_SERVER_TOKEN=${{ secrets.SUPERCHAT_SOLUTION_SERVER_TOKEN }}" >> $GITHUB_ENV
 
           echo "${{ secrets.SUPERCHAT_SOLUTION_SSL_KEY_BASE64 }}" | base64 --decode > private.pem

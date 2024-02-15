@@ -8,8 +8,8 @@ export type ApiConfig = {
   auth?: ApiAuth;
 };
 
-export type HttpResponse = {
-  data: object;
+export type HttpResponse<Response> = {
+  data: Response;
   status: number;
 };
 
@@ -22,7 +22,6 @@ export type OracleConfig = {
     address: string;
   };
   apiConfig: ApiConfig;
-  debugMode: boolean;
 };
 
 export type PemCert = {
@@ -34,6 +33,13 @@ export type PemCert = {
   };
 };
 
-export type PublicData = {
+export interface PublishData {
+  apiTimestamp: string;
+  numerator: string;
+  denominator: string;
+  sign: boolean;
+}
+
+export interface TransactionData extends PublishData {
   nonce?: number;
-};
+}

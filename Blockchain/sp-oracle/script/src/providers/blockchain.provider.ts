@@ -3,11 +3,10 @@ import Web3, { AbiInput, Contract, TransactionReceipt } from 'web3';
 import { IBlockchainProvider } from '../common/intrefaces';
 import { ORACLE_ABI, GAS_LIMIT } from '../common/constants';
 import { getErrorMessage } from '../common/utils';
-import { PublicData } from '../common/types';
+import { PublishData, TransactionData } from '../common/types';
 
 import { ChunkedX509Cert } from '../dto/cert.dto';
 import { ChunkedSGXQuote } from '../dto/quote.dto';
-import { ExchangeRateAbi } from '../dto/exchangeRate.dto';
 
 class BlockchainProvider implements IBlockchainProvider {
   private session?: { address: string; privateKey: string };
@@ -17,6 +16,8 @@ class BlockchainProvider implements IBlockchainProvider {
   private pubPrivateKey: string;
   private web3: Web3;
   private nonce?: number;
+
+  private readonly publishDataAbi: { PublishDataType: Record<keyof TransactionData, string> };
 
   constructor(
     nodeUrl: string,
@@ -33,6 +34,15 @@ class BlockchainProvider implements IBlockchainProvider {
     );
     this.pubAddress = pubAddress;
     this.pubPrivateKey = pubPrivateKey;
+    this.publishDataAbi = {
+      PublishDataType: {
+        apiTimestamp: 'uint32',
+        numerator: 'uint256',
+        denominator: 'uint256',
+        nonce: 'uint32',
+        sign: 'bool',
+      },
+    };
   }
 
   private async sendTx(txData: string, privateKey: string): Promise<TransactionReceipt> {
@@ -74,9 +84,19 @@ class BlockchainProvider implements IBlockchainProvider {
     return encodedData;
   }
 
-  public initSessionKey() {
+  public initSessionKey(): void {
     this.nonce = 0;
-    this.session = this.web3.eth.accounts.create();
+
+    if (process.env.NODE_ENV === 'test') {
+      console.warn('TEST MODE. Using publisher key as session key');
+      this.session = {
+        address: this.pubAddress,
+        privateKey: this.pubPrivateKey,
+      };
+    } else {
+      this.session = this.web3.eth.accounts.create();
+    }
+
     console.log('Session key generated');
   }
 
@@ -111,16 +131,20 @@ class BlockchainProvider implements IBlockchainProvider {
     }
   }
 
-  public async publish(key: string, data: PublicData): Promise<void> {
+  public async publish(key: string, data: PublishData): Promise<void> {
     if (!this.session) {
-        throw Error(`One must initialize the session before starting to publish`);
+      throw Error(`One must initialize the session before starting to publish`);
     }
 
     const bytes32Key = this.web3.utils.keccak256(key);
     const callback = '0x'; // optional
 
-    data.nonce = ++this.nonce!;
-    const encodedHexData = this.convertObjectToHex(data, ExchangeRateAbi);
+    const transactionData: TransactionData = {
+      ...data,
+      nonce: ++this.nonce!,
+    };
+
+    const encodedHexData = this.convertObjectToHex(transactionData, this.publishDataAbi);
 
     const dataHash = this.web3.utils.keccak256(encodedHexData);
     const signature = this.web3.eth.accounts.sign(dataHash, this.session.privateKey).signature;
